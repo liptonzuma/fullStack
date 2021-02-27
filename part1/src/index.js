@@ -1,55 +1,71 @@
-import React from 'react'
+import React,{useState,useEffect}  from 'react'
 import ReactDOM from 'react-dom'
+import axios from 'axios'
+import './index.css'
 
-const App = () => {
-  const course = 'Half Stack application development'
- const parts =[
-   {name:'Fundamentals of React',
-    exercises:10
-  },
-   {name:'Using props to pass data',
-    exercises:7
-  }, 
-  {name:'State of a component',
-    exercises:14
-  }
- ]
-  return (
-    <div>
-      <Header course={course} />
-      <Content parts={parts}/>
-      <Total parts={parts} />
-    </div>
-  )
-}
-const Header =(props) =>{
-  return(
-  <h1>{props.course}</h1>
-  )
-}
-const Content=(props)=>{
-  return(
-    <div>
-      <p>
-        {props.parts[0].name} {props.parts[0].exercises}
-      </p>
-      <p>
-        {props.parts[1].name} {props.parts[1].exercises}
-      </p>
-      <p>
-        {props.parts[2].name} {props.parts[2].exercises}
-      </p>
-    </div>
-  )
-}
-const Total =(props)=>{
-  return(
-    <div>
-      <p>
-        Number of exercises {props.parts[0].exercises+props.parts[1].exercises+props.parts[2].exercises}
-      </p>
-    </div>
-  )
+import FilterBox from './components/filterBox'
+
+
+const App=()=>{
+    const [country,setCountry]=useState([])
+    useEffect(()=>{
+        axios.get("https://restcountries.eu/rest/v2/all")
+        .then(response=>{
+            setCountry(response.data)
+        })
+    },[])
+
+    const [search,setSearch]=useState('')
+    const [find,setFind]=useState([])
+    const [display,setDisplay]=useState(false)
+    const [total,setTotal]=useState(false)
+    const [details,setDetails]=useState(false)
+    const handleInput=event=>{
+        setDisplay(true)
+        let input =event.target.value ;
+        setSearch(input)
+        let f=country.filter(c=>{
+            return c.name.toLowerCase().includes(input.toLowerCase())
+        })
+        setFind(f)
+        if(f.length <=10){
+            setTotal(true)
+        }else{
+            setTotal(false)
+        }
+    }
+
+   
+
+    return(
+          <>  
+          <FilterBox search={search} handleInput={handleInput}/>
+            <p>{find.length > 10? "Please enter a name of a country" :''}</p>
+            <div>{display && total? find.map(c=>{
+                return(
+                    <div key={c.name}>
+                        <h1>{c.name}</h1> <button onClick={()=>{
+                            setDetails(!details)
+                            c.details= !details
+                             }
+                             }>
+                             {c.details?"hide":"show"} Details
+                            </button>
+                            
+                                {c.details? <div>                           
+                        <h2>Capital: {c.capital}</h2>
+                        <h2>Population: {c.population}</h2>
+                        <h3>Spoken Language</h3>
+                        <ul>
+                            {c.languages.map((l,i)=> <li key={i}>{l.name}</li>)}
+                        </ul>
+                        <img src={c.flag} alt={c.name+"flag"}/></div>:""}
+
+                    </div>
+                )
+            }) : "Please Enter a precise country name"}</div>
+        </>
+        )
 }
 
-ReactDOM.render(<App />, document.getElementById('root'))
+ReactDOM.render(<App/>,document.querySelector('#root'))
